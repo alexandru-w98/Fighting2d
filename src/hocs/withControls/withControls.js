@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import * as styles from "./withControls.module.css";
 import useFrameLoop from "../useFrameLoop";
 
@@ -8,6 +8,7 @@ const DEFAULT_CONTROLS = {
   LEFT: "KeyA",
   RIGHT: "KeyD",
   ATTACK: "KeyP",
+  JUMP: "Space",
 };
 
 const DEFAULT_SPEED = 100;
@@ -20,11 +21,16 @@ const withControls = (Component) => {
 
     // attack
     const [isAttacking, setIsAttacking] = useState(false);
-    const [attackTimer, setAttackTimer] = useState(null);
+    const attackTimer = useRef(null);
+
+    // jump
+    const [isJumping, setIsJumping] = useState(false);
+    const jumpingTimer = useRef(null);
 
     // TODO: memo
     const onKeyDown = (e) => {
       const keyCode = e.code;
+
       if (keyCode === DEFAULT_CONTROLS.UP) {
         setSpeed((prev) => ({ ...prev, y: -DEFAULT_SPEED }));
       }
@@ -40,13 +46,28 @@ const withControls = (Component) => {
       if (keyCode === DEFAULT_CONTROLS.ATTACK) {
         setIsAttacking(true);
 
-        setAttackTimer((prev) => {
-          if (prev) {
-            clearTimeout(prev);
-          }
+        if (attackTimer.current) {
+          clearTimeout(attackTimer.current);
+        }
+        attackTimer.current = setTimeout(() => {
+          setIsAttacking(false);
+          attackTimer.current = null;
+        }, 500);
+      }
+      if (keyCode === DEFAULT_CONTROLS.JUMP) {
+        if (!jumpingTimer.current) {
+          setIsJumping(true);
+          setSpeed((prev) => ({ ...prev, y: -DEFAULT_SPEED }));
+          setTimeout(() => {
+            setSpeed((prev) => ({ ...prev, y: DEFAULT_SPEED }));
+          }, 400);
 
-          return setTimeout(() => setIsAttacking(false), 500);
-        });
+          jumpingTimer.current = setTimeout(() => {
+            setIsJumping(false);
+            jumpingTimer.current = null;
+            setSpeed((prev) => ({ ...prev, y: 0 }));
+          }, 800);
+        }
       }
     };
 
@@ -88,11 +109,11 @@ const withControls = (Component) => {
     );
 
     useEffect(() => {
-      if (speed.x > 0 && animationState !== "run-right") {
+      if (speed.x > 0 && animationState !== "run-right" && !isJumping) {
         setAnimationState("run-right");
-      } else if (speed.x < 0 && animationState !== "run-left") {
+      } else if (speed.x < 0 && animationState !== "run-left" && !isJumping) {
         setAnimationState("run-left");
-      } else if (speed.x === 0 && animationState !== "idle") {
+      } else if (speed.x === 0 && animationState !== "idle" && !isJumping) {
         setAnimationState("idle");
       }
 
@@ -101,7 +122,13 @@ const withControls = (Component) => {
       } else if (isAttacking && animationState !== "attack-right") {
         setAnimationState("attack-right");
       }
-    }, [speed.x, isAttacking]);
+
+      if (speed.x < 0 && isJumping && animationState !== "jump-left") {
+        setAnimationState("jump-left");
+      } else if (isJumping && animationState !== "jump-right") {
+        setAnimationState("jump-right");
+      }
+    }, [speed.x, isAttacking, isJumping]);
 
     return (
       <div

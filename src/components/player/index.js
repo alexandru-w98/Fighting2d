@@ -7,6 +7,8 @@ import GangsterRunRight from "../../../public/assets/characters/gangster/run-rig
 import GangsterRunLeft from "../../../public/assets/characters/gangster/run-left.png";
 import GangsterAttackRight from "../../../public/assets/characters/gangster/attack-right.png";
 import GangsterAttackLeft from "../../../public/assets/characters/gangster/attack-left.png";
+import GangsterJumpRight from "../../../public/assets/characters/gangster/jump-right.png";
+import GangsterJumpLeft from "../../../public/assets/characters/gangster/jump-left.png";
 
 const getImageSize = (path) => {
   return new Promise((resolve, reject) => {
@@ -38,6 +40,14 @@ const stateToSheetMapping = {
   ["attack-left"]: {
     spreadSheet: GangsterAttackLeft,
     duration: ".5s",
+  },
+  ["jump-right"]: {
+    spreadSheet: GangsterJumpRight,
+    duration: ".8s",
+  },
+  ["jump-left"]: {
+    spreadSheet: GangsterJumpLeft,
+    duration: ".8s",
   },
 };
 
