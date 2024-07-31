@@ -1,0 +1,13 @@
+.player {
+  overflow: hidden;
+
+  .character {
+    animation: idle infinite;
+  }
+}
+
+@keyframes idle {
+  to {
+    transform: translateX(-100%);
+  }
+}
