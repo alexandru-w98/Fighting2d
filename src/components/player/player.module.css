@@ -1,5 +1,6 @@
 .player {
   overflow: hidden;
+  transform: scale(2);
 
   .character {
     animation: idle infinite;

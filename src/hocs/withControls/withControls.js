@@ -1,6 +1,9 @@
+// @ts-nocheck
 import React, { useEffect, useState, useRef } from "react";
 import * as styles from "./withControls.module.css";
 import useFrameLoop from "../useFrameLoop";
+import classNames from "classnames";
+import { startsWith, pipe, split, append, join, prop, slice } from "ramda";
 
 const DEFAULT_CONTROLS = {
   UP: "KeyW",
@@ -13,9 +16,33 @@ const DEFAULT_CONTROLS = {
 
 const DEFAULT_SPEED = 100;
 
+// todo
+const calcPosition = (pos, toAdd) => {
+  if (startsWith("calc", pos)) {
+    const splittedString = split(" ")(pos);
+    const calcPart = splittedString[0];
+    const computedToAdd = pipe(
+      slice(1, Infinity),
+      join(""),
+      split("px"),
+      prop(0),
+      (val) => +val + toAdd
+    )(splittedString);
+    const operator = +computedToAdd < 0 ? "-" : "+";
+
+    return `${calcPart} ${operator} ${Math.abs(computedToAdd)}px)`;
+  }
+
+  return pos + toAdd;
+};
+
 const withControls = (Component) => {
-  const ComponentWithControls = (props) => {
-    const [position, setPosition] = useState({ x: 0, y: 0 });
+  const ComponentWithControls = ({
+    className = "",
+    initialPos = { x: 0, y: 0 },
+    ...props
+  }) => {
+    const [positionDelta, setPositionDelta] = useState({ x: 0, y: 0 });
     const [speed, setSpeed] = useState({ x: 0, y: 0 });
     const [animationState, setAnimationState] = useState("idle");
 
@@ -100,7 +127,7 @@ const withControls = (Component) => {
 
     useFrameLoop(
       (__, delta) => {
-        setPosition((prev) => ({
+        setPositionDelta((prev) => ({
           x: prev.x + speed.x * delta,
           y: prev.y + speed.y * delta,
         }));
@@ -130,10 +157,18 @@ const withControls = (Component) => {
       }
     }, [speed.x, isAttacking, isJumping]);
 
+    const containerClasses = classNames(
+      styles["controlled-wrapper"],
+      className
+    );
+
     return (
       <div
-        style={{ left: position.x, top: position.y }}
-        className={styles["controlled-wrapper"]}
+        style={{
+          left: calcPosition(initialPos.x, positionDelta.x),
+          top: calcPosition(initialPos.y, positionDelta.y),
+        }}
+        className={containerClasses}
       >
         <Component {...props} animationState={animationState} />
       </div>
